@@ -72,7 +72,21 @@ function AppInner() {
   }
 
   const getPage = PAGE_MAP[activePage] || PAGE_MAP['home'];
-  const currentPage = getPage();
+  
+  const DEFAULT_ALLOWED = ['home', 'profile'];
+  const hasAccess = user.role === 'admin' 
+    || DEFAULT_ALLOWED.includes(activePage) 
+    || (user.allowedPages && user.allowedPages.includes(activePage));
+
+  const currentPage = hasAccess ? getPage() : (
+    <div className="flex flex-col items-center justify-center p-12 text-center h-full animate-fade-in">
+      <div className="mb-4 text-red-400">
+        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+      </div>
+      <h2 className="text-2xl font-bold text-white mb-2">Yetkisiz Erişim</h2>
+      <p className="text-slate-400 max-w-md">Bu sayfayı görüntüleme yetkiniz bulunmuyor. Bir hata olduğunu düşünüyorsanız yöneticinizle iletişime geçin.</p>
+    </div>
+  );
 
   return (
     <div className="flex min-h-screen" style={{ background: 'var(--color-bg)' }}>

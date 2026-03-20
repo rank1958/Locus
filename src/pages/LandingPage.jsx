@@ -41,7 +41,7 @@ export default function LandingPage({ onLogin, onRegister }) {
           </div>
 
           {/* Auth Buttons */}
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center justify-end gap-2 mt-2 sm:mt-0">
             <button
               onClick={onLogin}
               className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm"
@@ -64,8 +64,8 @@ export default function LandingPage({ onLogin, onRegister }) {
       <div className="relative overflow-hidden py-16 px-6 text-center" style={{ maxWidth: 1200, margin: '0 auto' }}>
         <div className="absolute inset-0 opacity-5" style={{ background: 'radial-gradient(ellipse at center, #8b5cf6 0%, transparent 70%)' }} />
         <div className="relative">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold mb-4" style={{ background: 'rgba(139,92,246,0.15)', color: '#a78bfa', border: '1px solid rgba(139,92,246,0.3)' }}>
-            <Zap size={11} /> Oyun platformuna hoş geldin
+          <div className="inline-flex flex-wrap items-center justify-center gap-2 px-3 py-1 rounded-full text-xs font-semibold mb-4 text-center" style={{ background: 'rgba(139,92,246,0.15)', color: '#a78bfa', border: '1px solid rgba(139,92,246,0.3)' }}>
+            <Zap size={11} className="flex-shrink-0" /> Oyun platformuna hoş geldin
           </div>
           <h1 className="text-4xl font-black mb-3" style={{ fontFamily: 'Orbitron, sans-serif', color: '#c4b5fd' }}>GAMEHUB</h1>
           <p className="text-base mb-8" style={{ color: '#64748b' }}>Oyunları keşfet, topluluğa katıl, maceraya atıl</p>
@@ -82,10 +82,10 @@ export default function LandingPage({ onLogin, onRegister }) {
 
       {/* ── Content ── */}
       <div className="px-6 pb-16" style={{ maxWidth: 1200, margin: '0 auto' }}>
-        <div className="grid gap-6" style={{ gridTemplateColumns: '1fr 340px' }}>
+        <div className="flex flex-col lg:flex-row gap-6">
 
           {/* Platform Haberleri */}
-          <div>
+          <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-4">
               <Newspaper size={18} color="#8b5cf6" />
               <h2 className="font-bold text-white text-lg">Platform Haberleri</h2>
@@ -97,12 +97,12 @@ export default function LandingPage({ onLogin, onRegister }) {
                 {news.map((item, i) => (
                   <div key={item.id} className="card p-5 animate-fade-in" style={{ animationDelay: `${i * 0.08}s` }}>
                     <div className="flex items-start justify-between gap-3 mb-2">
-                      <h3 className="font-bold text-white text-base">{item.title}</h3>
+                      <h3 className="font-bold text-white text-base break-words flex-1 min-w-0">{item.title}</h3>
                       <span className="text-xs flex-shrink-0 flex items-center gap-1" style={{ color: '#64748b' }}>
                         <Clock size={11} /> {timeAgo(item.createdAt)}
                       </span>
                     </div>
-                    <p className="text-sm leading-relaxed" style={{ color: '#94a3b8' }}>{item.content}</p>
+                    <p className="text-sm leading-relaxed break-words" style={{ color: '#94a3b8' }}>{item.content}</p>
                     {item.tags?.length > 0 && (
                       <div className="flex flex-wrap gap-1 mt-3">
                         {item.tags.map(t => (
@@ -117,7 +117,7 @@ export default function LandingPage({ onLogin, onRegister }) {
           </div>
 
           {/* Sağ Panel — Son Topluluk Postları */}
-          <div>
+          <div className="w-full lg:w-[340px] flex-shrink-0">
             <div className="flex items-center gap-2 mb-4">
               <Users size={18} color="#06b6d4" />
               <h2 className="font-bold text-white text-lg">Topluluktan</h2>
@@ -142,12 +142,12 @@ export default function LandingPage({ onLogin, onRegister }) {
 
               {/* CTA */}
               <div
-                className="card p-5 text-center mt-2"
+                className="card p-5 text-center mt-2 flex flex-col items-center justify-center"
                 style={{ background: 'linear-gradient(135deg, rgba(139,92,246,0.1), rgba(6,182,212,0.05))', border: '1px solid rgba(139,92,246,0.25)' }}
               >
-                <p className="text-sm font-semibold text-white mb-1">Topluluğa katıl!</p>
-                <p className="text-xs mb-3" style={{ color: '#64748b' }}>Gönderilerini paylaş ve diğer oyuncularla tanış</p>
-                <button onClick={onRegister} className="btn-primary text-xs px-4 py-2">
+                <p className="text-sm font-semibold text-white mb-1 break-words">Topluluğa katıl!</p>
+                <p className="text-xs mb-3 break-words" style={{ color: '#64748b' }}>Gönderilerini paylaş ve diğer oyuncularla tanış</p>
+                <button onClick={onRegister} className="btn-primary text-xs px-4 py-2 w-full max-w-[200px]">
                   Ücretsiz Üye Ol
                 </button>
               </div>

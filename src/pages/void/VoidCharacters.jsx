@@ -142,7 +142,7 @@ export default function VoidCharacters() {
   const load = async () => {
     try {
       const data = await getCharacters();
-      setCharacters(data || []);
+      setCharacters(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error('Failed to load characters:', err);
       setCharacters([]);

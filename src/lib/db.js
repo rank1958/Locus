@@ -39,7 +39,14 @@ export const createUser = async (data) => {
   if (API()) return apiFetch('users', { method: 'POST', body: data });
   const users = lsRead(KEYS.USERS);
   if (users.find(u => u.username === data.username)) throw new Error('Kullanıcı adı zaten alınmış');
-  const user = { id: uid(), ...data, role: 'user', createdAt: Date.now(), online: false };
+  const user = { 
+    id: uid(), 
+    allowedPages: ['home', 'games', 'community', 'news', 'profile', 'void-lore', 'void-games', 'void-news', 'void-characters'],
+    ...data, 
+    role: data.role || 'user', 
+    createdAt: Date.now(), 
+    online: false 
+  };
   lsWrite(KEYS.USERS, [...users, user]);
   return user;
 };

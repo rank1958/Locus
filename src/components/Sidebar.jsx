@@ -25,12 +25,18 @@ export default function Sidebar({ active, onNav }) {
   const [voidOpen, setVoidOpen] = useState(false);
   const [adminOpen, setAdminOpen] = useState(false);
 
-  const navItem = (key, icon, label, indent = false) => (
-    <button key={key} onClick={() => onNav(key)} className={`nav-item${active === key ? ' active' : ''}`} style={indent ? { paddingLeft: '2rem', fontSize: '0.8rem' } : {}}>
-      {icon && <span>{icon}</span>}
-      {label}
-    </button>
-  );
+  const DEFAULT_ALLOWED = ['home', 'profile'];
+  const hasAccess = (key) => isAdmin || DEFAULT_ALLOWED.includes(key) || (user?.allowedPages && user.allowedPages.includes(key));
+
+  const navItem = (key, icon, label, indent = false) => {
+    if (!hasAccess(key)) return null;
+    return (
+      <button key={key} onClick={() => onNav(key)} className={`nav-item${active === key ? ' active' : ''}`} style={indent ? { paddingLeft: '2rem', fontSize: '0.8rem' } : {}}>
+        {icon && <span>{icon}</span>}
+        {label}
+      </button>
+    );
+  };
 
   return (
     <aside className="flex flex-col" style={{ width: 220, minHeight: '100vh', background: 'var(--color-surface)', borderRight: '1px solid rgba(139,92,246,0.15)', padding: '1.25rem 0.75rem', flexShrink: 0 }}>
@@ -62,25 +68,33 @@ export default function Sidebar({ active, onNav }) {
         {navItem('home', <Home size={14} />, 'Ana Sayfa')}
 
         {/* Games accordion */}
-        <button onClick={() => setGamesOpen(!gamesOpen)} className="nav-item justify-between">
-          <span className="flex items-center gap-2"><Gamepad2 size={14} /> Oyunlar</span>
-          {gamesOpen ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
-        </button>
-        {gamesOpen && (
-          <div className="flex flex-col gap-0.5 pl-2">
-            {navItem('games', null, '🎮 Tüm Oyunlar', true)}
-          </div>
+        {hasAccess('games') && (
+          <>
+            <button onClick={() => setGamesOpen(!gamesOpen)} className="nav-item justify-between">
+              <span className="flex items-center gap-2"><Gamepad2 size={14} /> Oyunlar</span>
+              {gamesOpen ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+            </button>
+            {gamesOpen && (
+              <div className="flex flex-col gap-0.5 pl-2">
+                {navItem('games', null, '🎮 Tüm Oyunlar', true)}
+              </div>
+            )}
+          </>
         )}
 
         {/* The Void Grid */}
-        <button onClick={() => setVoidOpen(!voidOpen)} className={`nav-item justify-between${active?.startsWith('void') ? ' active' : ''}`}>
-          <span className="flex items-center gap-2"><Globe size={14} /> The Void Grid</span>
-          {voidOpen ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
-        </button>
-        {voidOpen && (
-          <div className="flex flex-col gap-0.5 pl-2">
-            {VOID_ITEMS.map(item => navItem(item.key, null, item.label, true))}
-          </div>
+        {VOID_ITEMS.some(i => hasAccess(i.key)) && (
+          <>
+            <button onClick={() => setVoidOpen(!voidOpen)} className={`nav-item justify-between${active?.startsWith('void') ? ' active' : ''}`}>
+              <span className="flex items-center gap-2"><Globe size={14} /> The Void Grid</span>
+              {voidOpen ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+            </button>
+            {voidOpen && (
+              <div className="flex flex-col gap-0.5 pl-2">
+                {VOID_ITEMS.map(item => navItem(item.key, null, item.label, true))}
+              </div>
+            )}
+          </>
         )}
 
         {navItem('community', <Users size={14} />, 'Topluluk')}
