@@ -139,17 +139,29 @@ export default function VoidCharacters() {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ name: '', title: '', charClass: 'Savaşçı', story: '', color: '#8b5cf6' });
 
-  const load = () => setCharacters(getCharacters());
+  const load = async () => {
+    try {
+      const data = await getCharacters();
+      setCharacters(data || []);
+    } catch (err) {
+      console.error('Failed to load characters:', err);
+      setCharacters([]);
+    }
+  };
   useEffect(() => { load(); }, []);
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
-  const handleAdd = (e) => {
+  const handleAdd = async (e) => {
     e.preventDefault();
-    addCharacter({ ...form, createdBy: user.username });
-    setForm({ name: '', title: '', charClass: 'Savaşçı', story: '', color: '#8b5cf6' });
-    setShowForm(false);
-    load();
+    try {
+      await addCharacter({ ...form, createdBy: user.username });
+      setForm({ name: '', title: '', charClass: 'Savaşçı', story: '', color: '#8b5cf6' });
+      setShowForm(false);
+      load();
+    } catch (err) {
+      console.error('Failed to add character:', err);
+    }
   };
 
   return (
@@ -236,7 +248,7 @@ export default function VoidCharacters() {
                 {c.story && <p className="text-xs mt-2 leading-relaxed" style={{ color: '#64748b' }}>{c.story}</p>}
               </div>
               {isAdmin && (
-                <button onClick={() => { deleteCharacter(c.id); load(); }} className="btn-danger flex items-center gap-1 self-end" style={{ padding: '0.3rem 0.6rem', fontSize: '0.72rem' }}>
+                <button onClick={async () => { await deleteCharacter(c.id); load(); }} className="btn-danger flex items-center gap-1 self-end" style={{ padding: '0.3rem 0.6rem', fontSize: '0.72rem' }}>
                   <Trash2 size={12} /> Sil
                 </button>
               )}
