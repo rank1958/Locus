@@ -34,8 +34,12 @@ const MIME = {
 };
 
 function loadDB() {
-  try { return JSON.parse(fs.readFileSync(DB_PATH, 'utf8')); }
-  catch { return { users: [], games: [], voidGames: [], sessions: [], posts: [], news: [], voidNews: [], characters: [], favorites: [], ratings: [] }; }
+  try { 
+    const db = JSON.parse(fs.readFileSync(DB_PATH, 'utf8'));
+    if (!db.roles) db.roles = []; // Migrate older JSONs
+    return db;
+  }
+  catch { return { users: [], games: [], voidGames: [], sessions: [], posts: [], news: [], voidNews: [], characters: [], favorites: [], ratings: [], roles: [] }; }
 }
 
 function saveDB(db) {
@@ -43,6 +47,13 @@ function saveDB(db) {
 }
 
 function seedDB(db) {
+  if (!db.roles) db.roles = [];
+  if (db.roles.length === 0) {
+    db.roles.push(
+      { id: 'admin', name: 'Admin', color: '#f59e0b', allowedPages: ['all'], isDefault: false, isSystem: true, createdAt: Date.now() },
+      { id: 'user', name: 'Standart', color: '#8b5cf6', allowedPages: ['games', 'community', 'news', 'void-lore', 'void-games', 'void-news', 'void-characters'], isDefault: true, isSystem: true, createdAt: Date.now() }
+    );
+  }
   if (!db.users.find(u => u.username === 'admin')) {
     db.users.push({ id: 'admin-001', username: 'admin', password: '123', email: 'admin@gamehub.com', role: 'admin', gender: 'Erkek', age: 30, createdAt: Date.now(), online: false });
   }
@@ -104,7 +115,7 @@ function serveStatic(res, filePath) {
   }
 }
 
-const COL_MAP = { games: 'games', voidGames: 'voidGames', users: 'users', sessions: 'sessions', posts: 'posts', news: 'news', voidNews: 'voidNews', characters: 'characters', favorites: 'favorites', ratings: 'ratings' };
+const COL_MAP = { games: 'games', voidGames: 'voidGames', users: 'users', sessions: 'sessions', posts: 'posts', news: 'news', voidNews: 'voidNews', characters: 'characters', favorites: 'favorites', ratings: 'ratings', roles: 'roles' };
 
 const server = http.createServer(async (req, res) => {
   const parsed = url.parse(req.url);
@@ -180,6 +191,9 @@ const server = http.createServer(async (req, res) => {
         saveDB(db); json(res, 201, item);
       } else if (req.method === 'PUT') {
         const body = await parseBody(req);
+        if (col === 'roles' && body.isDefault) {
+          db.roles = db.roles.map(r => ({ ...r, isDefault: false }));
+        }
         db[col] = db[col].map(x => x.id === id ? { ...x, ...body } : x);
         saveDB(db);
         json(res, 200, db[col].find(x => x.id === id) || {});

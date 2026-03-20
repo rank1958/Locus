@@ -237,7 +237,14 @@ export const getGameRating = async (gameId) => {
 };
 
 // ── ROLES ──────────────────────────────────────────────────
-export const getRoles = async () => API() ? apiFetch('roles') : lsRead(KEYS.ROLES);
+export const getRoles = async () => {
+  try {
+    return API() ? await apiFetch('roles') : lsRead(KEYS.ROLES);
+  } catch (err) {
+    console.error("Roller çekilemedi:", err);
+    return [];
+  }
+};
 export const addRole = async (data) => {
   if (API()) return apiFetch('roles', { method: 'POST', body: data });
   const role = { id: uid(), ...data, isSystem: false, createdAt: Date.now() };
