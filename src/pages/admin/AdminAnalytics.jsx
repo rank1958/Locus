@@ -6,7 +6,18 @@ export default function AdminAnalytics() {
   const [sessions, setSessions] = useState([]);
   const [users, setUsers] = useState([]);
 
-  const load = () => { setSessions(getSessions()); setUsers(getUsers()); };
+  const load = async () => {
+    try {
+      const s = await getSessions();
+      const u = await getUsers();
+      setSessions(Array.isArray(s) ? s : []);
+      setUsers(Array.isArray(u) ? u : []);
+    } catch (err) {
+      console.error(err);
+      setSessions([]);
+      setUsers([]);
+    }
+  };
   useEffect(() => { load(); const t = setInterval(load, 5000); return () => clearInterval(t); }, []);
 
   const getUserName = (id) => users.find(u => u.id === id)?.username || id;
