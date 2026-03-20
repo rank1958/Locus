@@ -1,0 +1,95 @@
+import { useState, lazy, Suspense } from 'react';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { seedIfEmpty } from './lib/db';
+import Sidebar from './components/Sidebar';
+import LandingPage from './pages/LandingPage';
+import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
+import HomePage from './pages/HomePage';
+import GamesPage from './pages/GamesPage';
+import CommunityPage from './pages/CommunityPage';
+import NewsPage from './pages/NewsPage';
+// Void Grid — loaded lazily
+const VoidLore       = lazy(() => import('./pages/void/VoidLore'));
+const VoidGames      = lazy(() => import('./pages/void/VoidGames'));
+const VoidNews       = lazy(() => import('./pages/void/VoidNews'));
+const VoidCharacters = lazy(() => import('./pages/void/VoidCharacters'));
+// Admin — loaded lazily (recharts lives here)
+const AdminAnalytics = lazy(() => import('./pages/admin/AdminAnalytics'));
+const AdminStats     = lazy(() => import('./pages/admin/AdminStats'));
+const AdminGames     = lazy(() => import('./pages/admin/AdminGames'));
+const AdminAccounts  = lazy(() => import('./pages/admin/AdminAccounts'));
+
+// Seed localStorage with initial data
+seedIfEmpty();
+
+const PAGE_MAP = {
+  home: () => <HomePage />,
+  games: () => <GamesPage />,
+  community: () => <CommunityPage />,
+  news: () => <NewsPage />,
+  'void-lore': () => <VoidLore />,
+  'void-games': () => <VoidGames />,
+  'void-news': () => <VoidNews />,
+  'void-characters': () => <VoidCharacters />,
+  'admin-analytics': () => <AdminAnalytics />,
+  'admin-stats': () => <AdminStats />,
+  'admin-games': () => <AdminGames />,
+  'admin-accounts': () => <AdminAccounts />,
+};
+
+function AppInner() {
+  const { user, loading } = useAuth();
+  const [activePage, setActivePage] = useState('home');
+  // 'landing' | 'login' | 'register'
+  const [authView, setAuthView] = useState('landing');
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--color-bg)' }}>
+        <div className="flex gap-2">
+          {[0, 1, 2].map(i => (
+            <div key={i} className="w-3 h-3 rounded-full animate-glow" style={{ background: '#8b5cf6', animationDelay: `${i * 0.3}s` }} />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    if (authView === 'login')
+      return <LoginPage onGoRegister={() => setAuthView('register')} onBack={() => setAuthView('landing')} />;
+    if (authView === 'register')
+      return <RegisterPage onGoLogin={() => setAuthView('login')} onBack={() => setAuthView('landing')} />;
+    return (
+      <LandingPage
+        onLogin={() => setAuthView('login')}
+        onRegister={() => setAuthView('register')}
+      />
+    );
+  }
+
+  const getPage = PAGE_MAP[activePage] || PAGE_MAP['home'];
+  const currentPage = getPage();
+
+  return (
+    <div className="flex min-h-screen" style={{ background: 'var(--color-bg)' }}>
+      <Sidebar active={activePage} onNav={setActivePage} />
+      <main className="flex-1 overflow-y-auto" style={{ minWidth: 0 }}>
+        <Suspense fallback={<div style={{ padding: 40, color: '#8b5cf6' }}>Yükleniyor...</div>}>
+          <div key={activePage} className="animate-fade-in">
+            {currentPage}
+          </div>
+        </Suspense>
+      </main>
+    </div>
+  );
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppInner />
+    </AuthProvider>
+  );
+}

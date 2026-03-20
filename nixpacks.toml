@@ -1,0 +1,16 @@
+[phases.setup]
+nixPkgs = ["nodejs_20"]
+
+[variables]
+ELECTRON_SKIP_BINARY_DOWNLOAD = "1"
+
+[phases.install]
+cmds = ["npm install --production"]
+
+[phases.build]
+cmds = ["echo Pre-built dist included, skipping build"]
+
+[deploy]
+startCommand = "node server.cjs"
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 3

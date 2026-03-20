@@ -1,0 +1,33 @@
+{
+  "appId": "com.gamehub.app",
+  "productName": "GameHub",
+  "asar": false,
+  "directories": {
+    "output": "release",
+    "buildResources": "assets"
+  },
+  "files": [
+    "dist/**/*",
+    "main.cjs",
+    "preload.cjs",
+    "server.txt",
+    "package.json"
+  ],
+  "forceCodeSigning": false,
+  "win": {
+    "target": [
+      { "target": "nsis", "arch": ["x64"] }
+    ],
+    "signAndEditExecutable": false,
+    "verifyUpdateCodeSignature": false
+  },
+  "nsis": {
+    "oneClick": false,
+    "allowToChangeInstallationDirectory": true,
+    "createDesktopShortcut": true,
+    "createStartMenuShortcut": true,
+    "shortcutName": "GameHub",
+    "artifactName": "GameHub-Setup.exe",
+    "warningsAsErrors": false
+  }
+}
