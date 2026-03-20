@@ -9,6 +9,7 @@ import HomePage from './pages/HomePage';
 import GamesPage from './pages/GamesPage';
 import CommunityPage from './pages/CommunityPage';
 import NewsPage from './pages/NewsPage';
+import ProfilePage from './pages/ProfilePage';
 // Void Grid — loaded lazily
 const VoidLore       = lazy(() => import('./pages/void/VoidLore'));
 const VoidGames      = lazy(() => import('./pages/void/VoidGames'));
@@ -28,6 +29,7 @@ const PAGE_MAP = {
   games: () => <GamesPage />,
   community: () => <CommunityPage />,
   news: () => <NewsPage />,
+  profile: () => <ProfilePage />,
   'void-lore': () => <VoidLore />,
   'void-games': () => <VoidGames />,
   'void-news': () => <VoidNews />,

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import {
   Gamepad2, Home, Users, Newspaper, BarChart2, Settings,
-  ChevronDown, ChevronRight, LogOut, Star, Shield, Globe, Download
+  ChevronDown, ChevronRight, LogOut, Star, Shield, Globe, Download, User
 } from 'lucide-react';
 
 const VOID_ITEMS = [
@@ -85,6 +85,7 @@ export default function Sidebar({ active, onNav }) {
 
         {navItem('community', <Users size={14} />, 'Topluluk')}
         {navItem('news', <Newspaper size={14} />, 'Haberler')}
+        {navItem('profile', <User size={14} />, 'Profilim')}
 
         {/* Admin section */}
         {isAdmin && (

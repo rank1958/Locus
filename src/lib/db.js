@@ -25,6 +25,7 @@ const KEYS = {
   USERS: 'gh_users', GAMES: 'gh_games', SESSIONS: 'gh_sessions',
   POSTS: 'gh_posts', NEWS: 'gh_news', CHARACTERS: 'gh_characters',
   VOID_GAMES: 'gh_void_games', VOID_NEWS: 'gh_void_news',
+  FAVORITES: 'gh_favorites', RATINGS: 'gh_ratings',
 };
 const lsRead  = (k) => { try { return JSON.parse(localStorage.getItem(k)) || []; } catch { return []; } };
 const lsWrite = (k, d) => localStorage.setItem(k, JSON.stringify(d));
@@ -191,6 +192,34 @@ export const addCharacter = async (data) => {
 export const deleteCharacter = async (id) => {
   if (API()) return apiFetch(`characters/${id}`, { method: 'DELETE' });
   lsWrite(KEYS.CHARACTERS, lsRead(KEYS.CHARACTERS).filter(c => c.id !== id));
+};
+
+// ── FAVORITES ─────────────────────────────────────────────
+export const getFavorites = async (userId) => {
+  const all = API() ? await apiFetch('favorites') : lsRead(KEYS.FAVORITES);
+  return userId ? all.filter(f => f.userId === userId) : all;
+};
+export const toggleFavorite = async (userId, gameId) => {
+  if (API()) return apiFetch('favorites/toggleFavorite', { method: 'POST', body: { userId, gameId } });
+  const favs = lsRead(KEYS.FAVORITES);
+  const exists = favs.find(f => f.userId === userId && f.gameId === gameId);
+  if (exists) lsWrite(KEYS.FAVORITES, favs.filter(f => !(f.userId === userId && f.gameId === gameId)));
+  else lsWrite(KEYS.FAVORITES, [...favs, { id: uid(), userId, gameId, createdAt: Date.now() }]);
+  return { favorited: !exists };
+};
+
+// ── RATINGS ───────────────────────────────────────────────
+export const getRatings = async () => API() ? apiFetch('ratings') : lsRead(KEYS.RATINGS);
+export const rateGame = async (userId, gameId, rating) => {
+  if (API()) return apiFetch('ratings/rateGame', { method: 'POST', body: { userId, gameId, rating } });
+  const ratings = lsRead(KEYS.RATINGS).filter(r => !(r.userId === userId && r.gameId === gameId));
+  lsWrite(KEYS.RATINGS, [...ratings, { id: uid(), userId, gameId, rating, createdAt: Date.now() }]);
+};
+export const getGameRating = async (gameId) => {
+  const ratings = await getRatings();
+  const gameRatings = ratings.filter(r => r.gameId === gameId);
+  if (!gameRatings.length) return { avg: 0, count: 0 };
+  return { avg: gameRatings.reduce((s, r) => s + r.rating, 0) / gameRatings.length, count: gameRatings.length };
 };
 
 // ── SEED ───────────────────────────────────────────────────

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { X, Clock, ExternalLink, Terminal } from 'lucide-react';
-import { recordPlay, recordVoidPlay } from '../lib/db';
+import { X, Clock, ExternalLink, Terminal, Star } from 'lucide-react';
+import { recordPlay, recordVoidPlay, rateGame, getGameRating } from '../lib/db';
 import { useAuth } from '../contexts/AuthContext';
 
 const isExePath = (url) => url && (url.match(/\.exe$/i) || (url.match(/^[A-Za-z]:[\\\/]/) && !url.match(/\.html?$/i)));
@@ -13,7 +13,15 @@ export default function GameModal({ game, onClose, isVoid = false }) {
   const [saved, setSaved] = useState(false);
   const [launched, setLaunched] = useState(false);
   const [launchError, setLaunchError] = useState('');
+  const [userRating, setUserRating] = useState(0);
+  const [hoverRating, setHoverRating] = useState(0);
   const intervalRef = useRef(null);
+
+  useEffect(() => {
+    getGameRating(game.id).then(r => {
+      // load existing rating for this user if any — for simplicity just show avg
+    });
+  }, [game.id]);
 
   const gameUrl = game.url || '';
   const isExe = isExePath(gameUrl) || game.gameType === 'exe';
@@ -67,6 +75,20 @@ export default function GameModal({ game, onClose, isVoid = false }) {
             <span className="font-bold text-white">{game.name}</span>
             <span className="badge badge-purple">{game.category}</span>
             {isExe && <span className="badge" style={{ background: 'rgba(16,185,129,0.15)', color: '#6ee7b7' }}>🎮 Masaüstü</span>}
+            {/* Star Rating */}
+            <div className="flex items-center gap-0.5 ml-2">
+              {[1,2,3,4,5].map(s => (
+                <Star key={s} size={14}
+                  fill={s <= (hoverRating || userRating) ? '#f59e0b' : 'none'}
+                  color="#f59e0b"
+                  style={{ cursor: 'pointer', transition: 'transform 0.1s' }}
+                  onMouseEnter={() => setHoverRating(s)}
+                  onMouseLeave={() => setHoverRating(0)}
+                  onClick={async () => { setUserRating(s); await rateGame(user?.id, game.id, s); }}
+                />
+              ))}
+              {userRating > 0 && <span className="text-xs ml-1" style={{ color: '#f59e0b' }}>{userRating}/5</span>}
+            </div>
           </div>
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2 px-3 py-1 rounded-lg" style={{ background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.3)' }}>

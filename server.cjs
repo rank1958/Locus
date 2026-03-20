@@ -35,7 +35,7 @@ const MIME = {
 
 function loadDB() {
   try { return JSON.parse(fs.readFileSync(DB_PATH, 'utf8')); }
-  catch { return { users: [], games: [], voidGames: [], sessions: [], posts: [], news: [], voidNews: [], characters: [] }; }
+  catch { return { users: [], games: [], voidGames: [], sessions: [], posts: [], news: [], voidNews: [], characters: [], favorites: [], ratings: [] }; }
 }
 
 function saveDB(db) {
@@ -104,7 +104,7 @@ function serveStatic(res, filePath) {
   }
 }
 
-const COL_MAP = { games: 'games', voidGames: 'voidGames', users: 'users', sessions: 'sessions', posts: 'posts', news: 'news', voidNews: 'voidNews', characters: 'characters' };
+const COL_MAP = { games: 'games', voidGames: 'voidGames', users: 'users', sessions: 'sessions', posts: 'posts', news: 'news', voidNews: 'voidNews', characters: 'characters', favorites: 'favorites', ratings: 'ratings' };
 
 const server = http.createServer(async (req, res) => {
   const parsed = url.parse(req.url);
@@ -133,6 +133,19 @@ const server = http.createServer(async (req, res) => {
         }
       } else if (req.method === 'POST') {
         const body = await parseBody(req);
+        if (id === 'toggleFavorite') {
+          const { userId, gameId } = body;
+          const exists = db.favorites.find(f => f.userId === userId && f.gameId === gameId);
+          if (exists) db.favorites = db.favorites.filter(f => !(f.userId === userId && f.gameId === gameId));
+          else db.favorites.push({ id: uid(), userId, gameId, createdAt: Date.now() });
+          saveDB(db); json(res, 200, { ok: true, favorited: !exists }); return;
+        }
+        if (id === 'rateGame') {
+          const { userId, gameId, rating } = body;
+          db.ratings = db.ratings.filter(r => !(r.userId === userId && r.gameId === gameId));
+          db.ratings.push({ id: uid(), userId, gameId, rating, createdAt: Date.now() });
+          saveDB(db); json(res, 200, { ok: true }); return;
+        }
         if (id === 'recordPlay') {
           const { gameId, userId, durationSeconds, isVoid } = body;
           const target = isVoid ? 'voidGames' : 'games';

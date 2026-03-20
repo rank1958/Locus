@@ -8,15 +8,10 @@ export default function HomePage() {
   const [stats, setStats] = useState({ games: 0, users: 0, sessions: 0, topGame: null });
 
   useEffect(() => {
-    const games = getGames();
-    const users_ = getUsers();
-    const sessions = getSessions();
-    setStats({
-      games: games.length,
-      users: users_.length,
-      sessions: sessions.length,
-      topGame: games[0] || null,
-    });
+    (async () => {
+      const [games, users_, sessions] = await Promise.all([getGames(), getUsers(), getSessions()]);
+      setStats({ games: games.length, users: users_.length, sessions: sessions.length, topGame: games[0] || null });
+    })();
   }, []);
 
   const cards = [
