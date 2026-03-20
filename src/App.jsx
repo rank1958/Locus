@@ -10,6 +10,7 @@ import GamesPage from './pages/GamesPage';
 import CommunityPage from './pages/CommunityPage';
 import NewsPage from './pages/NewsPage';
 import ProfilePage from './pages/ProfilePage';
+import MaintenancePage from './pages/MaintenancePage';
 // Void Grid — loaded lazily
 const VoidLore       = lazy(() => import('./pages/void/VoidLore'));
 const VoidGames      = lazy(() => import('./pages/void/VoidGames'));
@@ -58,6 +59,13 @@ function AppInner() {
         </div>
       </div>
     );
+  }
+
+  // --- BAKIM MODU ŞALTERİ ---
+  const isMaintenanceMode = true;
+
+  if (isMaintenanceMode && !isAdmin && authView !== 'login') {
+    return <MaintenancePage onAdminLogin={() => setAuthView('login')} />;
   }
 
   if (!user) {
