@@ -7,19 +7,31 @@ const COLORS = ['#8b5cf6', '#6366f1', '#06b6d4', '#f59e0b', '#10b981', '#ef4444'
 
 export default function AdminStats() {
   const [games, setGames] = useState([]);
-  useEffect(() => { setGames(getGames()); }, []);
+  useEffect(() => { 
+    const load = async () => {
+      try {
+        const data = await getGames();
+        setGames(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error("Failed to load games:", err);
+        setGames([]);
+      }
+    };
+    load();
+  }, []);
 
-  const chartData = games.map(g => ({
-    name: g.name.length > 12 ? g.name.slice(0, 12) + '…' : g.name,
-    Oynanma: g.plays || 0,
-    Oyuncu: (g.uniquePlayers || []).length,
-    OrtSüre: g.plays > 0 ? Math.round((g.totalTime || 0) / g.plays / 60) : 0,
+  const safeGames = Array.isArray(games) ? games : [];
+  const chartData = safeGames.map(g => ({
+    name: g?.name?.length > 12 ? g.name.slice(0, 12) + '…' : g?.name || 'Bilinmiyor',
+    Oynanma: g?.plays || 0,
+    Oyuncu: Array.isArray(g?.uniquePlayers) ? g.uniquePlayers.length : 0,
+    OrtSüre: g?.plays > 0 ? Math.round((g?.totalTime || 0) / g.plays / 60) : 0,
   }));
 
-  const pieData = games.filter(g => (g.plays || 0) > 0).map(g => ({ name: g.name, value: g.plays }));
+  const pieData = safeGames.filter(g => (g?.plays || 0) > 0).map(g => ({ name: g?.name || 'Bilinmiyor', value: g?.plays }));
 
   const CustomTooltip = ({ active, payload, label }) => {
-    if (!active || !payload?.length) return null;
+    if (!active || !Array.isArray(payload) || payload.length === 0) return null;
     return (
       <div className="glass rounded-xl p-3 text-sm">
         <p className="font-bold text-white mb-1">{label}</p>
@@ -34,14 +46,14 @@ export default function AdminStats() {
 
       {/* Summary cards */}
       <div className="grid gap-4 mb-8" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(160px,1fr))' }}>
-        {games.slice(0, 4).map((g, i) => (
-          <div key={g.id} className="card p-4 animate-fade-in" style={{ animationDelay: `${i * 0.05}s` }}>
-            <p className="text-xs font-semibold mb-1 truncate" style={{ color: '#64748b' }}>{g.name}</p>
-            <p className="text-2xl font-black text-white">{g.plays || 0}</p>
+        {safeGames.slice(0, 4).map((g, i) => (
+          <div key={g?.id || i} className="card p-4 animate-fade-in" style={{ animationDelay: `${i * 0.05}s` }}>
+            <p className="text-xs font-semibold mb-1 truncate" style={{ color: '#64748b' }}>{g?.name || 'Bilinmiyor'}</p>
+            <p className="text-2xl font-black text-white">{g?.plays || 0}</p>
             <p className="text-xs" style={{ color: '#64748b' }}>oynanma</p>
             <hr className="divider my-2" />
-            <p className="text-sm font-bold" style={{ color: '#a78bfa' }}>{(g.uniquePlayers || []).length} oyuncu</p>
-            <p className="text-xs" style={{ color: '#4b5563' }}>~{g.plays > 0 ? Math.round((g.totalTime || 0) / g.plays / 60) : 0}dk ort.</p>
+            <p className="text-sm font-bold" style={{ color: '#a78bfa' }}>{Array.isArray(g?.uniquePlayers) ? g.uniquePlayers.length : 0} oyuncu</p>
+            <p className="text-xs" style={{ color: '#4b5563' }}>~{g?.plays > 0 ? Math.round((g?.totalTime || 0) / g.plays / 60) : 0}dk ort.</p>
           </div>
         ))}
       </div>

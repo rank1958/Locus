@@ -109,6 +109,27 @@ export default function AdminRoles() {
         </div>
       )}
 
+      {roles.length > 0 && (
+        <div className="card p-4 mb-5 flex items-center justify-between border border-amber-500/20 bg-amber-500/5">
+          <div>
+            <h3 className="font-bold text-amber-400 flex items-center gap-2"><Star size={16} /> Yeni Kayıt (Varsayılan) Rolü</h3>
+            <p className="text-xs text-slate-400 mt-1">Sisteme dışarıdan yeni kayıt olan kişilere otomatik olarak verilecek rolü belirleyin.</p>
+          </div>
+          <select 
+            className="input-field max-w-[200px]" 
+            value={roles.find(r => r.isDefault)?.id || ''} 
+            onChange={(e) => {
+              const selected = roles.find(r => r.id === e.target.value);
+              if (selected) setAsDefault(selected);
+            }}
+          >
+            {roles.filter(r => r.id !== 'admin').map(r => (
+              <option key={r.id} value={r.id}>{r.name}</option>
+            ))}
+          </select>
+        </div>
+      )}
+
       <div className="grid gap-4">
         {roles.map(r => (
           <div key={r.id} className="card p-4 flex flex-col gap-3" style={{ borderLeft: `4px solid ${r.color}` }}>
