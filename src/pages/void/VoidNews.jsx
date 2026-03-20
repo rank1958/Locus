@@ -9,7 +9,7 @@ export default function VoidNews() {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ title: '', content: '' });
 
-  const load = () => setNews(getVoidNews());
+  const load = async () => setNews(await getVoidNews());
   useEffect(() => { load(); }, []);
 
   const handleAdd = (e) => {

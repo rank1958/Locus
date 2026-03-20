@@ -7,7 +7,7 @@ export default function VoidGames() {
   const [games, setGames] = useState([]);
   const [selected, setSelected] = useState(null);
 
-  const load = () => setGames(getVoidGames());
+  const load = async () => setGames(await getVoidGames());
   useEffect(() => { load(); }, []);
   const handleClose = () => { setSelected(null); load(); };
 
