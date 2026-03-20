@@ -17,16 +17,17 @@ const ADMIN_ITEMS = [
   { key: 'admin-stats', label: 'İstatistikler', icon: BarChart2 },
   { key: 'admin-games', label: 'Oyun Yönetimi', icon: Gamepad2 },
   { key: 'admin-accounts', label: 'Hesap Yönetimi', icon: Users },
+  { key: 'admin-roles', label: 'Rol Yönetimi', icon: Shield },
 ];
 
 export default function Sidebar({ active, onNav }) {
-  const { user, logout, isAdmin } = useAuth();
+  const { user, userRole, logout, isAdmin } = useAuth();
   const [gamesOpen, setGamesOpen] = useState(true);
   const [voidOpen, setVoidOpen] = useState(false);
   const [adminOpen, setAdminOpen] = useState(false);
 
   const DEFAULT_ALLOWED = ['home', 'profile'];
-  const hasAccess = (key) => isAdmin || DEFAULT_ALLOWED.includes(key) || (user?.allowedPages && user.allowedPages.includes(key));
+  const hasAccess = (key) => isAdmin || DEFAULT_ALLOWED.includes(key) || (userRole?.allowedPages && (userRole.allowedPages.includes('all') || userRole.allowedPages.includes(key)));
 
   const navItem = (key, icon, label, indent = false) => {
     if (!hasAccess(key)) return null;

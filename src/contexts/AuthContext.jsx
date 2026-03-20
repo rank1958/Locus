@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { findUser, createUser, updateUser, getUsers, seedIfEmpty } from '../lib/db';
+import { findUser, createUser, updateUser, getUsers, seedIfEmpty, getRoles } from '../lib/db';
 
 const AuthContext = createContext(null);
 export const useAuth = () => useContext(AuthContext);
@@ -16,6 +16,7 @@ if (typeof window !== 'undefined') {
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [userRole, setUserRole] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -43,6 +44,16 @@ export const AuthProvider = ({ children }) => {
       updateUser(user.id, { online: false });
     };
   }, [user?.id]);
+
+  useEffect(() => {
+    if (user) {
+      getRoles().then(roles => {
+        setUserRole(roles.find(r => r.id === user.role) || null);
+      });
+    } else {
+      setUserRole(null);
+    }
+  }, [user]);
 
   const login = useCallback(async (username, password) => {
     const found = await findUser(username);
@@ -81,7 +92,7 @@ export const AuthProvider = ({ children }) => {
   }, [user]);
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, refreshUser, isAdmin: user?.role === 'admin' }}>
+    <AuthContext.Provider value={{ user, userRole, loading, login, register, logout, refreshUser, isAdmin: user?.role === 'admin' }}>
       {children}
     </AuthContext.Provider>
   );

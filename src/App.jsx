@@ -20,6 +20,7 @@ const AdminAnalytics = lazy(() => import('./pages/admin/AdminAnalytics'));
 const AdminStats     = lazy(() => import('./pages/admin/AdminStats'));
 const AdminGames     = lazy(() => import('./pages/admin/AdminGames'));
 const AdminAccounts  = lazy(() => import('./pages/admin/AdminAccounts'));
+const AdminRoles     = lazy(() => import('./pages/admin/AdminRoles'));
 
 // Seed localStorage with initial data
 seedIfEmpty();
@@ -38,10 +39,11 @@ const PAGE_MAP = {
   'admin-stats': () => <AdminStats />,
   'admin-games': () => <AdminGames />,
   'admin-accounts': () => <AdminAccounts />,
+  'admin-roles': () => <AdminRoles />,
 };
 
 function AppInner() {
-  const { user, loading } = useAuth();
+  const { user, userRole, loading, isAdmin } = useAuth();
   const [activePage, setActivePage] = useState('home');
   // 'landing' | 'login' | 'register'
   const [authView, setAuthView] = useState('landing');
@@ -74,9 +76,9 @@ function AppInner() {
   const getPage = PAGE_MAP[activePage] || PAGE_MAP['home'];
   
   const DEFAULT_ALLOWED = ['home', 'profile'];
-  const hasAccess = user.role === 'admin' 
+  const hasAccess = isAdmin
     || DEFAULT_ALLOWED.includes(activePage) 
-    || (user.allowedPages && user.allowedPages.includes(activePage));
+    || (userRole?.allowedPages && (userRole.allowedPages.includes('all') || userRole.allowedPages.includes(activePage)));
 
   const currentPage = hasAccess ? getPage() : (
     <div className="flex flex-col items-center justify-center p-12 text-center h-full animate-fade-in">

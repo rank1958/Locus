@@ -25,7 +25,7 @@ const KEYS = {
   USERS: 'gh_users', GAMES: 'gh_games', SESSIONS: 'gh_sessions',
   POSTS: 'gh_posts', NEWS: 'gh_news', CHARACTERS: 'gh_characters',
   VOID_GAMES: 'gh_void_games', VOID_NEWS: 'gh_void_news',
-  FAVORITES: 'gh_favorites', RATINGS: 'gh_ratings',
+  FAVORITES: 'gh_favorites', RATINGS: 'gh_ratings', ROLES: 'gh_roles'
 };
 const lsRead  = (k) => { try { return JSON.parse(localStorage.getItem(k)) || []; } catch { return []; } };
 const lsWrite = (k, d) => localStorage.setItem(k, JSON.stringify(d));
@@ -39,11 +39,18 @@ export const createUser = async (data) => {
   if (API()) return apiFetch('users', { method: 'POST', body: data });
   const users = lsRead(KEYS.USERS);
   if (users.find(u => u.username === data.username)) throw new Error('Kullanıcı adı zaten alınmış');
+  
+  const roles = lsRead(KEYS.ROLES);
+  const defaultRole = roles.find(r => r.isDefault) || roles.find(r => r.id === 'user') || { id: 'user' };
+
+  // Remove direct allowedPages mapping, rely strictly on assigned Role ID.
+  const refinedData = { ...data };
+  delete refinedData.allowedPages;
+
   const user = { 
     id: uid(), 
-    allowedPages: ['home', 'games', 'community', 'news', 'profile', 'void-lore', 'void-games', 'void-news', 'void-characters'],
-    ...data, 
-    role: data.role || 'user', 
+    ...refinedData, 
+    role: data.role || defaultRole.id, 
     createdAt: Date.now(), 
     online: false 
   };
@@ -229,10 +236,41 @@ export const getGameRating = async (gameId) => {
   return { avg: gameRatings.reduce((s, r) => s + r.rating, 0) / gameRatings.length, count: gameRatings.length };
 };
 
+// ── ROLES ──────────────────────────────────────────────────
+export const getRoles = async () => API() ? apiFetch('roles') : lsRead(KEYS.ROLES);
+export const addRole = async (data) => {
+  if (API()) return apiFetch('roles', { method: 'POST', body: data });
+  const role = { id: uid(), ...data, isSystem: false, createdAt: Date.now() };
+  lsWrite(KEYS.ROLES, [...lsRead(KEYS.ROLES), role]);
+  return role;
+};
+export const updateRole = async (id, patch) => {
+  if (API()) return apiFetch(`roles/${id}`, { method: 'PUT', body: patch });
+  let roles = lsRead(KEYS.ROLES);
+  if (patch.isDefault) {
+    // only one default role is allowed
+    roles = roles.map(r => ({ ...r, isDefault: false }));
+  }
+  lsWrite(KEYS.ROLES, roles.map(r => r.id === id ? { ...r, ...patch } : r));
+};
+export const deleteRole = async (id) => {
+  if (API()) return apiFetch(`roles/${id}`, { method: 'DELETE' });
+  const roles = lsRead(KEYS.ROLES);
+  const role = roles.find(r => r.id === id);
+  if (role && role.isSystem) throw new Error("Sistem rolleri silinemez.");
+  lsWrite(KEYS.ROLES, roles.filter(r => r.id !== id));
+};
+
 // ── SEED ───────────────────────────────────────────────────
 // In network mode, the API server seeds itself. Only needed for offline localStorage mode.
 export const seedIfEmpty = () => {
   if (API()) return; // API server handles seeding
+  if (lsRead(KEYS.ROLES).length === 0) {
+    lsWrite(KEYS.ROLES, [
+      { id: 'admin', name: 'Admin', color: '#f59e0b', allowedPages: ['all'], isDefault: false, isSystem: true, createdAt: Date.now() },
+      { id: 'user', name: 'Standart', color: '#8b5cf6', allowedPages: ['games', 'community', 'news', 'void-lore', 'void-games', 'void-news', 'void-characters'], isDefault: true, isSystem: true, createdAt: Date.now() }
+    ]);
+  }
   if (!lsRead(KEYS.USERS).find(u => u.username === 'admin')) {
     lsWrite(KEYS.USERS, [...lsRead(KEYS.USERS), { id: 'admin-001', username: 'admin', password: '123', email: 'admin@gamehub.com', role: 'admin', gender: 'Erkek', age: 30, createdAt: Date.now(), online: false }]);
   }
