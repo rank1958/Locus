@@ -69,13 +69,16 @@ export default function LandingPage({ onLogin, onRegister }) {
           </div>
           <h1 className="text-4xl font-black mb-3" style={{ fontFamily: 'Orbitron, sans-serif', color: '#c4b5fd' }}>GAMEHUB</h1>
           <p className="text-base mb-8" style={{ color: '#64748b' }}>Oyunları keşfet, topluluğa katıl, maceraya atıl</p>
-          <div className="flex items-center justify-center gap-3">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <button onClick={onRegister} className="btn-primary px-8 py-3">
               Ücretsiz Kayıt Ol
             </button>
             <button onClick={onLogin} className="px-6 py-3 rounded-lg font-semibold text-sm" style={{ background: 'rgba(255,255,255,0.05)', color: '#94a3b8', border: '1px solid rgba(255,255,255,0.1)', cursor: 'pointer' }}>
               Giriş Yap
             </button>
+            <a href="/GameHub-Setup.exe" download className="px-6 py-3 rounded-lg font-semibold text-sm flex items-center gap-2 hover:scale-105 transition-transform" style={{ background: 'rgba(6,182,212,0.15)', color: '#22d3ee', border: '1px solid rgba(6,182,212,0.3)', textDecoration: 'none' }}>
+              <Zap size={16} /> Masaüstü için İndir
+            </a>
           </div>
         </div>
       </div>

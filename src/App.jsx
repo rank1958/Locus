@@ -62,7 +62,7 @@ function AppInner() {
   }
 
   // --- BAKIM MODU ŞALTERİ ---
-  const isMaintenanceMode = true;
+  const isMaintenanceMode = false;
 
   if (isMaintenanceMode && !isAdmin && authView !== 'login') {
     return <MaintenancePage onAdminLogin={() => setAuthView('login')} />;

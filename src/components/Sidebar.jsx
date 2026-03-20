@@ -121,8 +121,8 @@ export default function Sidebar({ active, onNav }) {
 
       {/* Download App */}
       <a
-        href="/GameHub-Setup.zip"
-        download="GameHub-Setup.zip"
+        href="/GameHub-Setup.exe"
+        download="GameHub-Setup.exe"
         className="nav-item mt-2"
         style={{ color: '#06b6d4', textDecoration: 'none' }}
         title="Masaüstü uygulamasını indir"

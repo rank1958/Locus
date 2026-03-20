@@ -100,15 +100,23 @@ function serveStatic(res, filePath) {
   const ext = path.extname(filePath);
   const mime = MIME[ext] || 'application/octet-stream';
   try {
-    const content = fs.readFileSync(filePath);
-    res.writeHead(200, { 'Content-Type': mime });
-    res.end(content);
+    if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
+      const stat = fs.statSync(filePath);
+      res.writeHead(200, { 'Content-Type': mime, 'Content-Length': stat.size });
+      fs.createReadStream(filePath).pipe(res);
+    } else {
+      throw new Error('Not found or is a directory');
+    }
   } catch {
     // SPA fallback — serve index.html
     try {
-      const content = fs.readFileSync(path.join(DIST_DIR, 'index.html'));
-      res.writeHead(200, { 'Content-Type': 'text/html' });
-      res.end(content);
+      const indexPath = path.join(DIST_DIR, 'index.html');
+      if (fs.existsSync(indexPath)) {
+        res.writeHead(200, { 'Content-Type': 'text/html' });
+        fs.createReadStream(indexPath).pipe(res);
+      } else {
+        res.writeHead(404); res.end('Not found');
+      }
     } catch {
       res.writeHead(404); res.end('Not found');
     }

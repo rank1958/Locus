@@ -12,7 +12,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "electron:dev": "concurrently -k \"vite\" \"wait-on http://localhost:5173 && cross-env NODE_ENV=development electron .\"",
-    "electron:build": "vite build && electron-builder --win --config electron-builder.json"
+    "electron:build": "vite build && electron-builder --win --config electron-builder.json",
+    "build:desktop": "npm run electron:build && node -e \"require('fs').copyFileSync('release/GameHub-Setup.exe', 'public/GameHub-Setup.exe')\""
   },
   "dependencies": {
     "lucide-react": "^0.577.0",
