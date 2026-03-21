@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { getGames, addGame, deleteGame, addVoidGame, deleteVoidGame, getVoidGames } from '../../lib/db';
-import { Plus, Trash2, X, Upload, Link, Gamepad2, FolderOpen } from 'lucide-react';
+import { Plus, Trash2, X, Upload, Link, Gamepad2, FolderOpen, Download } from 'lucide-react';
 
 const CATEGORIES = ['Aksiyon', 'Bulmaca', 'Strateji', 'Yarış', 'Spor', 'RPG', 'Macera', 'Diğer'];
 const COLORS_PICK = ['#8b5cf6', '#6366f1', '#06b6d4', '#f59e0b', '#10b981', '#ef4444', '#ec4899'];
@@ -8,7 +8,7 @@ const COLORS_PICK = ['#8b5cf6', '#6366f1', '#06b6d4', '#f59e0b', '#10b981', '#ef
 const isElectron = typeof window !== 'undefined' && !!window.electronAPI;
 
 function GameForm({ onAdd, isVoid = false }) {
-  const [form, setForm] = useState({ name: '', category: 'Aksiyon', color: '#8b5cf6', url: '' });
+  const [form, setForm] = useState({ name: '', category: 'Aksiyon', color: '#8b5cf6', url: '', downloadUrl: '', downloadSize: '', exeName: '' });
   const [uploadProgress, setUploadProgress] = useState(null);
   const [uploadedName, setUploadedName] = useState('');
   const [gameType, setGameType] = useState('url'); // 'url' | 'html' | 'exe'
@@ -62,8 +62,9 @@ function GameForm({ onAdd, isVoid = false }) {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!form.name.trim()) return;
-    onAdd({ ...form, gameType });
-    setForm({ name: '', category: 'Aksiyon', color: '#8b5cf6', url: '' });
+    const finalType = gameType === 'desktop' ? 'desktop' : gameType;
+    onAdd({ ...form, gameType: finalType });
+    setForm({ name: '', category: 'Aksiyon', color: '#8b5cf6', url: '', downloadUrl: '', downloadSize: '', exeName: '' });
     setUploadedName('');
     setGameType('url');
   };
@@ -99,8 +100,9 @@ function GameForm({ onAdd, isVoid = false }) {
         <div className="flex gap-2 mb-3">
           {[
             { k: 'url', label: '🌐 Web URL' },
-            { k: 'exe', label: '🎮 .exe Dosyası (Godot/Windows)' },
-            { k: 'html', label: '📄 HTML Dosyası' },
+            { k: 'exe', label: '🎮 .exe (Yerel)' },
+            { k: 'html', label: '📄 HTML' },
+            { k: 'desktop', label: '⬇ İndirilebilir Masaüstü' },
           ].map(({ k, label }) => (
             <button key={k} type="button" onClick={() => { setGameType(k); set('url', ''); setUploadedName(''); }}
               className={gameType === k ? 'btn-primary' : 'btn-secondary'} style={{ fontSize: '0.75rem' }}>
@@ -160,6 +162,33 @@ function GameForm({ onAdd, isVoid = false }) {
                 <div className="progress-bar"><div className="progress-fill" style={{ width: `${uploadProgress}%` }} /></div>
               </div>
             )}
+          </div>
+        )}
+        {gameType === 'desktop' && (
+          <div className="flex flex-col gap-3">
+            <div className="rounded-lg px-4 py-2 text-xs" style={{ background: 'rgba(6,182,212,0.08)', color: '#67e8f9', border: '1px solid rgba(6,182,212,0.25)' }}>
+              ⬇ Kullanıcılar bu oyunu GameHub içinden indirecek. Dosyayı GitHub Releases veya başka bir URL'de host et.
+            </div>
+            <div>
+              <label className="form-label">İndirme URL'si (.zip veya .exe)</label>
+              <div className="relative">
+                <Download size={13} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#64748b' }} />
+                <input className="input-field" style={{ paddingLeft: '2rem' }} value={form.downloadUrl}
+                  onChange={e => set('downloadUrl', e.target.value)} placeholder="https://github.com/.../releases/.../oyun.zip" />
+              </div>
+            </div>
+            <div className="grid gap-3" style={{ gridTemplateColumns: '1fr 1fr' }}>
+              <div>
+                <label className="form-label">Boyut (gösterim için)</label>
+                <input className="input-field" value={form.downloadSize}
+                  onChange={e => set('downloadSize', e.target.value)} placeholder="örn: 150 MB" />
+              </div>
+              <div>
+                <label className="form-label">.exe Dosya Adı (zip içindeyse)</label>
+                <input className="input-field" value={form.exeName}
+                  onChange={e => set('exeName', e.target.value)} placeholder="örn: SKManager.exe" />
+              </div>
+            </div>
           </div>
         )}
       </div>
@@ -222,7 +251,7 @@ export default function AdminGames() {
             <span className="badge badge-purple">{g.category}</span>
             <span style={{ color: '#94a3b8' }}>{g.plays || 0}</span>
             <span className="text-xs truncate" style={{ color: '#4b5563' }}>
-              {g.url ? (g.gameType === 'exe' ? '🎮 .exe' : g.gameType === 'html' ? '📄 HTML' : '🌐 URL') : '—'}
+              {g.gameType === 'desktop' ? '⬇ Masaüstü' : g.url ? (g.gameType === 'exe' ? '🎮 .exe' : g.gameType === 'html' ? '📄 HTML' : '🌐 URL') : '—'}
             </span>
             <button onClick={() => handleDel(g.id)} className="btn-danger" style={{ padding: '0.25rem 0.4rem' }}><Trash2 size={12} /></button>
           </div>

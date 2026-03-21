@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { getGames, getFavorites, toggleFavorite, getRatings } from '../lib/db';
 import { useAuth } from '../contexts/AuthContext';
 import GameModal from '../components/GameModal';
-import { Play, Users, Clock, Heart, Star, Search } from 'lucide-react';
+import { Play, Users, Clock, Heart, Star, Search, Download, Trash2, HardDrive } from 'lucide-react';
 
 const CATEGORIES = ['Tümü', 'Aksiyon', 'Bulmaca', 'Strateji', 'Yarış', 'Spor', 'RPG'];
 const COLORS = ['#8b5cf6', '#6366f1', '#06b6d4', '#f59e0b', '#10b981', '#ef4444'];
@@ -17,6 +17,14 @@ export default function GamesPage() {
   const [ratingMap, setRatingMap] = useState({});
   const [sortBy, setSortBy] = useState('plays');
 
+  // { gameId: { percent, status } }  status: 'downloading' | 'extracting' | 'done' | 'error'
+  const [dlState, setDlState] = useState({});
+  // { gameId: { installed, exePath } }
+  const [installState, setInstallState] = useState({});
+  const unlistenRef = useRef(null);
+
+  const isElectron = !!window.electronAPI;
+
   const load = async () => {
     const [gms, favs, ratings] = await Promise.all([
       getGames(),
@@ -25,7 +33,6 @@ export default function GamesPage() {
     ]);
     setGames(gms);
     setFavIds(new Set(favs.map(f => f.gameId)));
-    // Build avg rating map
     const map = {};
     ratings.forEach(r => {
       if (!map[r.gameId]) map[r.gameId] = { sum: 0, count: 0 };
@@ -33,9 +40,46 @@ export default function GamesPage() {
       map[r.gameId].count += 1;
     });
     setRatingMap(map);
+
+    // Desktop oyunların kurulum durumunu kontrol et
+    if (isElectron) {
+      const desktopGames = gms.filter(g => g.gameType === 'desktop');
+      const checks = await Promise.all(
+        desktopGames.map(g =>
+          window.electronAPI.getGamePath(g.id, g.exeName)
+            .then(res => ({ id: g.id, ...res }))
+        )
+      );
+      const iState = {};
+      checks.forEach(c => { iState[c.id] = { installed: c.installed, exePath: c.exePath }; });
+      setInstallState(iState);
+    }
   };
 
-  useEffect(() => { load(); }, [user?.id]);
+  useEffect(() => {
+    load();
+
+    // Download progress dinleyici
+    if (isElectron && window.electronAPI.onDownloadProgress) {
+      const unlisten = window.electronAPI.onDownloadProgress((data) => {
+        setDlState(prev => ({ ...prev, [data.gameId]: { percent: data.percent, status: data.status, message: data.message } }));
+        if (data.status === 'done') {
+          // Kurulum durumunu güncelle
+          const game = games.find(g => g.id === data.gameId);
+          if (game) {
+            window.electronAPI.getGamePath(data.gameId, game.exeName).then(res => {
+              setInstallState(prev => ({ ...prev, [data.gameId]: { installed: res.installed, exePath: res.exePath } }));
+            });
+          }
+        }
+      });
+      unlistenRef.current = unlisten;
+    }
+
+    return () => {
+      if (unlistenRef.current) unlistenRef.current();
+    };
+  }, [user?.id]);
 
   const handleFav = async (e, gameId) => {
     e.stopPropagation();
@@ -53,6 +97,32 @@ export default function GamesPage() {
   };
 
   const handleClose = () => { setSelected(null); load(); };
+
+  const handleDownload = async (e, game) => {
+    e.stopPropagation();
+    if (!isElectron) return alert('Bu özellik sadece masaüstü uygulamasında kullanılabilir.');
+    if (!game.downloadUrl) return alert('Bu oyun için indirme bağlantısı tanımlanmamış.');
+
+    const fileName = game.downloadUrl.split('/').pop() || 'game.zip';
+    setDlState(prev => ({ ...prev, [game.id]: { percent: 0, status: 'downloading' } }));
+    window.electronAPI.downloadGame(game.id, game.downloadUrl, fileName);
+  };
+
+  const handleDelete = async (e, game) => {
+    e.stopPropagation();
+    if (!isElectron) return;
+    if (!confirm(`"${game.name}" yerel dosyaları silinsin mi?`)) return;
+    await window.electronAPI.deleteGame(game.id);
+    setInstallState(prev => ({ ...prev, [game.id]: { installed: false } }));
+    setDlState(prev => { const n = { ...prev }; delete n[game.id]; return n; });
+  };
+
+  const handlePlay = async (e, game) => {
+    e.stopPropagation();
+    const inst = installState[game.id];
+    if (!inst?.installed || !inst?.exePath) return;
+    await window.electronAPI.launchGameExe(inst.exePath);
+  };
 
   const filtered = games
     .filter(g => {
@@ -72,6 +142,58 @@ export default function GamesPage() {
         ))}
         {r && <span className="text-xs" style={{ color: '#64748b' }}>({r.count})</span>}
       </div>
+    );
+  };
+
+  // Desktop oyun buton alanı
+  const DesktopGameActions = ({ game }) => {
+    const dl = dlState[game.id];
+    const inst = installState[game.id];
+    const isDownloading = dl && (dl.status === 'downloading' || dl.status === 'extracting');
+    const isInstalled = inst?.installed;
+
+    if (isDownloading) {
+      const label = dl.status === 'extracting' ? 'Açılıyor...' : `${dl.percent}%`;
+      return (
+        <div className="flex flex-col gap-1">
+          <div className="w-full rounded-full overflow-hidden" style={{ height: 6, background: 'rgba(139,92,246,0.2)' }}>
+            <div style={{ width: `${dl.percent}%`, height: '100%', background: 'linear-gradient(90deg,#8b5cf6,#06b6d4)', transition: 'width 0.3s' }} />
+          </div>
+          <span className="text-xs text-center" style={{ color: '#a78bfa' }}>{label}</span>
+        </div>
+      );
+    }
+
+    if (dl?.status === 'error') {
+      return (
+        <div className="flex flex-col gap-2">
+          <span className="text-xs text-center" style={{ color: '#fca5a5' }}>❌ Hata: {dl.message}</span>
+          <button onClick={e => handleDownload(e, game)} className="btn-secondary w-full flex items-center justify-center gap-2" style={{ fontSize: '0.8rem' }}>
+            <Download size={13} /> Tekrar Dene
+          </button>
+        </div>
+      );
+    }
+
+    if (isInstalled) {
+      return (
+        <div className="flex gap-2">
+          <button onClick={e => handlePlay(e, game)} className="btn-primary flex-1 flex items-center justify-center gap-2">
+            <Play size={14} /> Oyna
+          </button>
+          <button onClick={e => handleDelete(e, game)} className="flex items-center justify-center rounded-lg px-3"
+            style={{ background: 'rgba(239,68,68,0.1)', color: '#fca5a5', border: '1px solid rgba(239,68,68,0.3)' }}>
+            <Trash2 size={14} />
+          </button>
+        </div>
+      );
+    }
+
+    return (
+      <button onClick={e => handleDownload(e, game)} className="btn-secondary w-full flex items-center justify-center gap-2">
+        <Download size={14} />
+        İndir {game.downloadSize ? `(${game.downloadSize})` : ''}
+      </button>
     );
   };
 
@@ -114,14 +236,19 @@ export default function GamesPage() {
           {filtered.map((game, i) => {
             const color = game.color || COLORS[i % COLORS.length];
             const isFav = favIds.has(game.id);
+            const isDesktop = game.gameType === 'desktop';
+
             return (
-              <div key={game.id} className="card p-5 flex flex-col gap-3 animate-fade-in" style={{ animationDelay: `${i * 0.05}s`, transition: 'transform 0.2s, box-shadow 0.2s' }}
+              <div key={game.id} className="card p-5 flex flex-col gap-3 animate-fade-in"
+                style={{ animationDelay: `${i * 0.05}s`, transition: 'transform 0.2s, box-shadow 0.2s', cursor: isDesktop ? 'default' : 'pointer' }}
+                onClick={() => !isDesktop && setSelected(game)}
                 onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = `0 8px 30px ${color}33`; }}
                 onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = ''; }}>
 
                 {/* Game icon + fav btn */}
                 <div className="relative w-full h-28 rounded-xl flex items-center justify-center text-4xl" style={{ background: `linear-gradient(135deg, ${color}22, ${color}44)`, border: `1px solid ${color}44` }}>
-                  🎮
+                  {isDesktop ? <HardDrive size={40} color={color} /> : '🎮'}
+                  {isDesktop && <span className="absolute top-2 left-2 text-xs px-2 py-0.5 rounded-full font-semibold" style={{ background: `${color}33`, color }}>Masaüstü</span>}
                   <button onClick={e => handleFav(e, game.id)} className="absolute top-2 right-2 w-7 h-7 rounded-lg flex items-center justify-center transition-all"
                     style={{ background: isFav ? '#ec4899' : 'rgba(0,0,0,0.4)' }}>
                     <Heart size={13} fill={isFav ? 'white' : 'none'} color="white" />
@@ -141,9 +268,13 @@ export default function GamesPage() {
                   <span className="flex items-center gap-1"><Clock size={11} /> {Math.round((game.totalTime || 0) / 60)}dk</span>
                 </div>
 
-                <button onClick={() => setSelected(game)} className="btn-primary w-full flex items-center justify-center gap-2">
-                  <Play size={14} /> Oyna
-                </button>
+                {isDesktop ? (
+                  <DesktopGameActions game={game} />
+                ) : (
+                  <button onClick={() => setSelected(game)} className="btn-primary w-full flex items-center justify-center gap-2">
+                    <Play size={14} /> Oyna
+                  </button>
+                )}
               </div>
             );
           })}
