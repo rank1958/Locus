@@ -76,7 +76,7 @@ export default function LandingPage({ onLogin, onRegister }) {
             <button onClick={onLogin} className="px-6 py-3 rounded-lg font-semibold text-sm" style={{ background: 'rgba(255,255,255,0.05)', color: '#94a3b8', border: '1px solid rgba(255,255,255,0.1)', cursor: 'pointer' }}>
               Giriş Yap
             </button>
-            <a href="/GameHub-Setup.exe" download className="px-6 py-3 rounded-lg font-semibold text-sm flex items-center gap-2 hover:scale-105 transition-transform" style={{ background: 'rgba(6,182,212,0.15)', color: '#22d3ee', border: '1px solid rgba(6,182,212,0.3)', textDecoration: 'none' }}>
+            <a href="https://github.com/rank1958/Locus/releases/latest/download/GameHub-Setup.exe" download className="px-6 py-3 rounded-lg font-semibold text-sm flex items-center gap-2 hover:scale-105 transition-transform" style={{ background: 'rgba(6,182,212,0.15)', color: '#22d3ee', border: '1px solid rgba(6,182,212,0.3)', textDecoration: 'none' }}>
               <Zap size={16} /> Masaüstü için İndir
             </a>
           </div>
