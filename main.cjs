@@ -57,14 +57,17 @@ async function createWindow() {
   // Try network server first, fall back to local files
   let loadUrl;
   if (!isDev) {
-    const serverUrl = getServerUrl();
-    if (serverUrl) {
-      const online = await checkServer(serverUrl);
-      if (online) {
-        loadUrl = serverUrl;
-        console.log('[GameHub] Loading from network server:', serverUrl);
-      }
+    // Önce server.txt'ten özel sunucu URL'si oku
+    let serverUrl = getServerUrl();
+    // Yoksa Railway'i varsayılan olarak kullan
+    if (!serverUrl) serverUrl = 'https://locus-production-bcac.up.railway.app';
+
+    const online = await checkServer(serverUrl);
+    if (online) {
+      loadUrl = serverUrl;
+      console.log('[GameHub] Loading from server:', serverUrl);
     }
+
     if (!loadUrl) {
       loadUrl = `file://${path.join(__dirname, 'dist', 'index.html')}`;
       console.log('[GameHub] Server offline, loading from local files');
