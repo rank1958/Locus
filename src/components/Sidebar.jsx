@@ -122,7 +122,7 @@ export default function Sidebar({ active, onNav }) {
       {/* Download App */}
       <a
         href="https://github.com/rank1958/Locus/releases/download/v1.0.0/GameHub-Setup.exe"
-        download="GameHub-Setup.exe"
+        download="https://github.com/rank1958/Locus/releases/download/v1.0.0/GameHub-Setup.exe"
         className="nav-item mt-2"
         style={{ color: '#06b6d4', textDecoration: 'none' }}
         title="Masaüstü uygulamasını indir"
