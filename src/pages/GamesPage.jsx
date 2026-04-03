@@ -11,6 +11,7 @@ export default function GamesPage() {
   const { user } = useAuth();
   const [games, setGames] = useState([]);
   const [selected, setSelected] = useState(null);
+  const [storeView, setStoreView] = useState(false);
   const [search, setSearch] = useState('');
   const [cat, setCat] = useState('Tümü');
   const [favIds, setFavIds] = useState(new Set());
@@ -96,7 +97,13 @@ export default function GamesPage() {
     return r ? (r.sum / r.count) : 0;
   };
 
-  const handleClose = () => { setSelected(null); load(); };
+  const handleClose = () => { setSelected(null); setStoreView(false); load(); };
+
+  const openStore = (e, game) => {
+    e.stopPropagation();
+    setStoreView(true);
+    setSelected(game);
+  };
 
   const handleDownload = async (e, game) => {
     e.stopPropagation();
@@ -240,8 +247,8 @@ export default function GamesPage() {
 
             return (
               <div key={game.id} className="card p-5 flex flex-col gap-3 animate-fade-in"
-                style={{ animationDelay: `${i * 0.05}s`, transition: 'transform 0.2s, box-shadow 0.2s', cursor: isDesktop ? 'default' : 'pointer' }}
-                onClick={() => !isDesktop && setSelected(game)}
+                style={{ animationDelay: `${i * 0.05}s`, transition: 'transform 0.2s, box-shadow 0.2s', cursor: 'pointer' }}
+                onClick={(e) => isDesktop ? openStore(e, game) : setSelected(game)}
                 onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = `0 8px 30px ${color}33`; }}
                 onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = ''; }}>
 
@@ -281,7 +288,7 @@ export default function GamesPage() {
         </div>
       )}
 
-      {selected && <GameModal game={selected} onClose={handleClose} />}
+      {selected && <GameModal game={selected} onClose={handleClose} storeView={storeView} dlState={dlState[selected?.id]} />}
     </div>
   );
 }

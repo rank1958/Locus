@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import {
   Gamepad2, Home, Users, Newspaper, BarChart2, Settings,
-  ChevronDown, ChevronRight, LogOut, Star, Shield, Globe, Download, User
+  ChevronDown, ChevronRight, LogOut, Star, Shield,Globe, Download, User, MessageSquare
 } from 'lucide-react';
 
 const VOID_ITEMS = [
@@ -26,7 +26,7 @@ export default function Sidebar({ active, onNav }) {
   const [voidOpen, setVoidOpen] = useState(false);
   const [adminOpen, setAdminOpen] = useState(false);
 
-  const DEFAULT_ALLOWED = ['home', 'profile'];
+  const DEFAULT_ALLOWED = ['home', 'profile', 'comms'];
   const hasAccess = (key) => isAdmin || DEFAULT_ALLOWED.includes(key) || (userRole?.allowedPages && (userRole.allowedPages.includes('all') || userRole.allowedPages.includes(key)));
 
   const navItem = (key, icon, label, indent = false) => {
@@ -100,6 +100,7 @@ export default function Sidebar({ active, onNav }) {
 
         {navItem('community', <Users size={14} />, 'Topluluk')}
         {navItem('news', <Newspaper size={14} />, 'Haberler')}
+        {navItem('comms', <MessageSquare size={14} color="#8b5cf6" />, 'İletişim Portalı')}
         {navItem('profile', <User size={14} />, 'Profilim')}
 
         {/* Admin section */}
@@ -119,9 +120,10 @@ export default function Sidebar({ active, onNav }) {
         )}
       </div>
 
-     {/* Download App */}
+      {/* Download App */}
       <a
-        href="https://github.com/rank1958/Locus/releases/download/v1.0.0/GameHub-Setup-Yeni.exe"
+        href="/GameHub-Setup.exe"
+        download="GameHub-Setup.exe"
         className="nav-item mt-2"
         style={{ color: '#06b6d4', textDecoration: 'none' }}
         title="Masaüstü uygulamasını indir"

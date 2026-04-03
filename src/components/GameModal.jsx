@@ -77,7 +77,7 @@ export default function GameModal({ game, onClose, isVoid = false }) {
             {isExe && <span className="badge" style={{ background: 'rgba(16,185,129,0.15)', color: '#6ee7b7' }}>🎮 Masaüstü</span>}
             {/* Star Rating */}
             <div className="flex items-center gap-0.5 ml-2">
-              {[1,2,3,4,5].map(s => (
+              {[1, 2, 3, 4, 5].map(s => (
                 <Star key={s} size={14}
                   fill={s <= (hoverRating || userRating) ? '#f59e0b' : 'none'}
                   color="#f59e0b"

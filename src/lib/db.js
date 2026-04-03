@@ -27,7 +27,8 @@ const KEYS = {
   USERS: 'gh_users', GAMES: 'gh_games', SESSIONS: 'gh_sessions',
   POSTS: 'gh_posts', NEWS: 'gh_news', CHARACTERS: 'gh_characters',
   VOID_GAMES: 'gh_void_games', VOID_NEWS: 'gh_void_news',
-  FAVORITES: 'gh_favorites', RATINGS: 'gh_ratings', ROLES: 'gh_roles'
+  FAVORITES: 'gh_favorites', RATINGS: 'gh_ratings', ROLES: 'gh_roles',
+  GROUPS: 'gh_groups', GROUP_REQUESTS: 'gh_group_requests'
 };
 const lsRead  = (k) => { try { return JSON.parse(localStorage.getItem(k)) || []; } catch { return []; } };
 const lsWrite = (k, d) => localStorage.setItem(k, JSON.stringify(d));
@@ -168,6 +169,16 @@ export const getTrendingTopics = async () => {
 // ── NEWS ───────────────────────────────────────────────────
 export const getNews = async () => {
   const list = API() ? await apiFetch('news') : lsRead(KEYS.NEWS);
+  try {
+    // KÖPRÜ (BRIDGE): PUSH Deployment Center'daki Aktif yamaları otomatik çeker
+    const pushRes = await fetch('http://localhost:4000/api/push_news');
+    if (pushRes.ok) {
+      const pushNews = await pushRes.json();
+      list.push(...pushNews);
+    }
+  } catch (e) {
+    console.warn("PUSH Motoruna ulaşılamadı (Aktif değil veya kapalı).");
+  }
   return [...list].sort((a, b) => b.createdAt - a.createdAt);
 };
 export const addNews = async (data) => {
@@ -288,5 +299,74 @@ export const seedIfEmpty = () => {
   }
   if (lsRead(KEYS.NEWS).length === 0) {
     lsWrite(KEYS.NEWS, [{ id: uid(), title: 'GameHub v1.0 Yayında!', content: 'Modern oyun platformumuz artık resmi olarak açık.', author: 'admin', createdAt: Date.now() }]);
+  }
+};
+
+// ── GROUPS & GUILDS ─────────────────────────────────────────
+export const getGroups = async () => API() ? apiFetch('groups') : lsRead(KEYS.GROUPS);
+
+export const createGroup = async (name, desc, ownerId) => {
+  if (API()) return apiFetch('groups', { method: 'POST', body: { name, desc, ownerId } });
+  const groups = lsRead(KEYS.GROUPS);
+  const inviteId = 'G-' + Math.random().toString(36).substring(2, 6).toUpperCase();
+  const group = { 
+    id: uid(), 
+    inviteId, 
+    name, 
+    desc, 
+    ownerId, 
+    members: [ownerId],
+    createdAt: Date.now() 
+  };
+  lsWrite(KEYS.GROUPS, [...groups, group]);
+  return group;
+};
+
+export const getGroupRequests = async () => API() ? apiFetch('groupRequests') : lsRead(KEYS.GROUP_REQUESTS);
+
+export const requestJoinGroup = async (inviteId, userId) => {
+  if (API()) return apiFetch('groupRequests/join', { method: 'POST', body: { inviteId, userId } });
+  
+  const groups = lsRead(KEYS.GROUPS);
+  const targetGroup = groups.find(g => g.inviteId === inviteId);
+  if (!targetGroup) throw new Error("Geçersiz Grup Kimliği (ID).");
+  if (targetGroup.members.includes(userId)) throw new Error("Zaten bu grubun üyesisiniz.");
+  
+  const requests = lsRead(KEYS.GROUP_REQUESTS);
+  if (requests.find(r => r.groupId === targetGroup.id && r.userId === userId && r.status === 'pending')) {
+    throw new Error("Liderden hala bir yanıt bekliyorsunuz.");
+  }
+  
+  const request = { id: uid(), groupId: targetGroup.id, userId, status: 'pending', createdAt: Date.now() };
+  lsWrite(KEYS.GROUP_REQUESTS, [...requests, request]);
+  return request;
+};
+
+export const acceptJoinRequest = async (requestId) => {
+  if (API()) return apiFetch(`groupRequests/${requestId}/accept`, { method: 'POST' });
+  
+  let requests = lsRead(KEYS.GROUP_REQUESTS);
+  const reqItem = requests.find(r => r.id === requestId);
+  if (!reqItem) throw new Error("İstek bulunamadı.");
+  
+  reqItem.status = 'accepted';
+  lsWrite(KEYS.GROUP_REQUESTS, requests.map(r => r.id === requestId ? reqItem : r));
+  
+  let groups = lsRead(KEYS.GROUPS);
+  const grp = groups.find(g => g.id === reqItem.groupId);
+  if (grp && !grp.members.includes(reqItem.userId)) {
+    grp.members.push(reqItem.userId);
+    lsWrite(KEYS.GROUPS, groups.map(g => g.id === grp.id ? grp : g));
+  }
+};
+
+export const rejectJoinRequest = async (requestId) => {
+  if (API()) return apiFetch(`groupRequests/${requestId}/reject`, { method: 'POST' });
+  
+  let requests = lsRead(KEYS.GROUP_REQUESTS);
+  const reqItem = requests.find(r => r.id === requestId);
+  if (reqItem) {
+    reqItem.status = 'rejected';
+    lsWrite(KEYS.GROUP_REQUESTS, requests.map(r => r.id === requestId ? reqItem : r));
   }
 };

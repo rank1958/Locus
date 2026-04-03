@@ -11,6 +11,7 @@ import CommunityPage from './pages/CommunityPage';
 import NewsPage from './pages/NewsPage';
 import ProfilePage from './pages/ProfilePage';
 import MaintenancePage from './pages/MaintenancePage';
+import CommsPage from './pages/CommsPage';
 // Void Grid — loaded lazily
 const VoidLore       = lazy(() => import('./pages/void/VoidLore'));
 const VoidGames      = lazy(() => import('./pages/void/VoidGames'));
@@ -31,6 +32,7 @@ const PAGE_MAP = {
   games: () => <GamesPage />,
   community: () => <CommunityPage />,
   news: () => <NewsPage />,
+  comms: () => <CommsPage />,
   profile: () => <ProfilePage />,
   'void-lore': () => <VoidLore />,
   'void-games': () => <VoidGames />,
@@ -83,7 +85,7 @@ function AppInner() {
 
   const getPage = PAGE_MAP[activePage] || PAGE_MAP['home'];
   
-  const DEFAULT_ALLOWED = ['home', 'profile'];
+  const DEFAULT_ALLOWED = ['home', 'profile', 'comms'];
   const hasAccess = isAdmin
     || DEFAULT_ALLOWED.includes(activePage) 
     || (userRole?.allowedPages && (userRole.allowedPages.includes('all') || userRole.allowedPages.includes(activePage)));
