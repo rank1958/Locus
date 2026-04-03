@@ -125,10 +125,10 @@ function serveStatic(res, filePath) {
 
 const COL_MAP = { games: 'games', voidGames: 'voidGames', users: 'users', sessions: 'sessions', posts: 'posts', news: 'news', voidNews: 'voidNews', characters: 'characters', favorites: 'favorites', ratings: 'ratings', roles: 'roles' };
 
-const server = http.createServer(async (req, res) => {
-  if (req.url === '/GameHub-Setup.exe') {
-    res.writeHead(302, { 'Location': 'https://github.com/rank1958/Locus/releases/download/v1.0.0/GameHub-Setup-Yeni.exe' });
+if (req.url === '/GameHub-Setup.exe') {
+    res.writeHead(302, { 'Location': 'https://github.com/rank1958/Locus/releases/download/v1.0.0/GameHub-Setup.exe' });
     return res.end();
+  }
   }
   const parsed = url.parse(req.url);
   const pathname = parsed.pathname;
